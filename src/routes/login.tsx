@@ -2,18 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { toast } from "sonner";
-import { Database, ShieldCheck, KeyRound } from "lucide-react";
+import {
+  KerfaIcon,
+  Pill,
+  useKerfaPrefs,
+} from "@/components/kerfa/KerfaKit";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -25,15 +19,19 @@ const ADMIN_TEST_PASSWORD = "TDOAdmin2026!";
 function LoginPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { backdrop, resolvedTheme, toggleTheme } = useKerfaPrefs();
+  const [email, setEmail] = useState(ADMIN_TEST_EMAIL);
+  const [password, setPassword] = useState(ADMIN_TEST_PASSWORD);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) navigate({ to: "/dashboard" });
   }, [user, navigate]);
 
-  const signInWithCredentials = async (loginEmail: string, loginPassword: string) => {
+  const signInWithCredentials = async (
+    loginEmail: string,
+    loginPassword: string
+  ) => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
@@ -60,92 +58,213 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Database className="h-6 w-6" />
-          </div>
-          <CardTitle className="text-xl">TDO Provisions-Hub</CardTitle>
-          <CardDescription>
-            Geschützter Mitarbeiter- & Admin-Zugang (Registrierung deaktiviert)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={signIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="login-email">E-Mail</Label>
-              <Input
-                id="login-email"
-                type="email"
-                placeholder="name@tdo-hub.de"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="login-password">Passwort</Label>
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="••••••••"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Wird angemeldet..." : "Anmelden"}
-            </Button>
-          </form>
+    <div className="app">
+      <div className="backdrop" aria-hidden="true">
+        <div className="backdrop__layer">
+          {backdrop !== "plain" && (
+            <img
+              src={`/photos/kerfa/${backdrop}-1600.jpg`}
+              srcSet={`/photos/kerfa/${backdrop}-900.jpg 900w, /photos/kerfa/${backdrop}-1600.jpg 1600w`}
+              sizes="100vw"
+              alt=""
+            />
+          )}
+        </div>
+        <div className="backdrop__veil" />
+      </div>
 
-          <div className="rounded-lg border border-primary/25 bg-primary/5 p-3.5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-                <ShieldCheck className="h-4 w-4" />
-                <span>Admin Test-Login</span>
+      <div className="signin">
+        <div className="signin__card glass">
+          <div className="signin__in">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
+              <div className="brand">
+                <span className="brand__mark">
+                  <KerfaIcon name="logo" />
+                </span>
+                <span className="brand__text">
+                  <span className="brand__name">TDO Hub</span>
+                  <span className="brand__sub">Provisions-Desk</span>
+                </span>
               </div>
-              <span className="text-[11px] text-muted-foreground">Rolle: Admin</span>
-            </div>
-            <div className="grid grid-cols-1 gap-1 text-xs font-mono bg-background/80 rounded border border-border/60 p-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">E-Mail:</span>
-                <span className="font-semibold select-all">{ADMIN_TEST_EMAIL}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Passwort:</span>
-                <span className="font-semibold select-all">{ADMIN_TEST_PASSWORD}</span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs"
-                onClick={() => {
-                  setEmail(ADMIN_TEST_EMAIL);
-                  setPassword(ADMIN_TEST_PASSWORD);
+                className="ibtn"
+                onClick={toggleTheme}
+                title="Design wechseln"
+              >
+                <KerfaIcon name={resolvedTheme === "dark" ? "sun" : "moon"} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 8,
                 }}
               >
-                <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                Daten ausfüllen
-              </Button>
-              <Button
+                <Pill tone="ok">Live · WhatsApp &amp; KI-Parser</Pill>
+                <Pill tone="accent" dot={false}>
+                  11 Anbieter
+                </Pill>
+              </div>
+              <h1
+                style={{
+                  fontSize: "var(--fs-2xl)",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.15,
+                }}
+              >
+                Im Studio-Desk anmelden
+              </h1>
+              <p
+                style={{
+                  fontSize: "var(--fs-sm)",
+                  color: "var(--ink-3)",
+                  marginTop: 4,
+                }}
+              >
+                Zentrales Vertriebs- &amp; Provisions-CRM für alle 11 Sparten,
+                OpenWA-Gruppen-Sync und 12-Blatt Abrechnung.
+              </p>
+            </div>
+
+            {/* 1-Click Admin Test Access Card */}
+            <div
+              className="card--well"
+              style={{
+                padding: 14,
+                borderRadius: "var(--r-lg)",
+                border: "1px solid var(--line)",
+                marginBottom: 18,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: "var(--fs-xs)",
+                    fontWeight: 600,
+                    color: "var(--accent)",
+                  }}
+                >
+                  <KerfaIcon name="key" size="sm" />
+                  Direkter Test-Zugang (Admin)
+                </span>
+                <span className="badge">Sofort-Login</span>
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr",
+                  gap: "4px 12px",
+                  fontSize: "var(--fs-xs)",
+                  marginBottom: 12,
+                }}
+              >
+                <span style={{ color: "var(--ink-3)" }}>E-Mail:</span>
+                <code className="mono" style={{ color: "var(--ink)" }}>
+                  {ADMIN_TEST_EMAIL}
+                </code>
+                <span style={{ color: "var(--ink-3)" }}>Passwort:</span>
+                <code className="mono" style={{ color: "var(--ink)" }}>
+                  {ADMIN_TEST_PASSWORD}
+                </code>
+              </div>
+              <button
                 type="button"
-                size="sm"
-                className="flex-1 text-xs"
+                className="btn btn--primary btn--block"
                 disabled={loading}
                 onClick={handleQuickAdminLogin}
               >
-                <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
-                Direkt als Admin starten
-              </Button>
+                <KerfaIcon name="bolt" size="sm" />
+                <span>
+                  {loading
+                    ? "Anmeldung läuft…"
+                    : "Mit 1-Klick als Admin einloggen"}
+                </span>
+              </button>
+            </div>
+
+            <form
+              onSubmit={signIn}
+              style={{ display: "flex", flexDirection: "column", gap: 12 }}
+            >
+              <label className="field">
+                <span className="field__label">E-Mail-Adresse</span>
+                <input
+                  type="email"
+                  className="input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@tdo-hub.de"
+                  required
+                />
+              </label>
+
+              <label className="field">
+                <span className="field__label">Passwort</span>
+                <input
+                  type="password"
+                  className="input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="btn btn--lg btn--block"
+                disabled={loading}
+                style={{ marginTop: 4 }}
+              >
+                <span>{loading ? "Wird geprüft…" : "Manuell anmelden"}</span>
+                <KerfaIcon name="arrowR" size="sm" />
+              </button>
+            </form>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 16,
+                paddingTop: 14,
+                borderTop: "1px solid var(--line)",
+                fontSize: "var(--fs-xs)",
+                color: "var(--ink-3)",
+              }}
+            >
+              <KerfaIcon name="shield" size="sm" />
+              <span>
+                Geschützter Bereich — Neue Zugänge werden durch Administratoren
+                vergeben.
+              </span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
