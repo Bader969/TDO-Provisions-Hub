@@ -156,7 +156,7 @@ function AppLayout() {
             </span>
             <div>
               <div style={{ fontWeight: 600 }}>TDO Provisions-Hub</div>
-              <div style={{ fontSize: "var(--fs-xs)", color: "var(--ink-3)" }}>
+              <div className="muted" style={{ fontSize: "var(--fs-xs)" }}>
                 Arbeitsbereich wird geladen…
               </div>
             </div>
@@ -269,7 +269,7 @@ function AppLayout() {
                 data-pill-active={isCurrent ? "true" : undefined}
               >
                 <KerfaIcon name={item.icon} />
-                <span>{item.label}</span>
+                <span className="topnav__label">{item.label}</span>
               </Link>
             );
           })}
@@ -341,19 +341,21 @@ function AppLayout() {
             <Avatar name={userName} size="sm" online />
           </button>
 
-          {/* Quick Sparten & Actions Popover */}
+          {/* Quick Sparten & Actions Popover (using exact .menu__item / .menu__label / .menu__sep) */}
           {newMenuOpen && (
             <div
-              className="pop glass"
-              style={{ right: 112, top: "calc(100% + 10px)", width: 270 }}
+              className="pop"
+              style={{
+                position: "absolute",
+                right: 92,
+                top: "calc(100% + 10px)",
+                width: 280,
+              }}
             >
-              <div className="pop__head">
-                <div className="pop__title">Schnellzugriff &amp; 11 Sparten</div>
-                <div className="pop__sub">Direkt zu einer Tabelle wechseln</div>
-              </div>
+              <div className="menu__label">Schnellaktionen</div>
               <button
                 type="button"
-                className="pop__item"
+                className="menu__item"
                 onClick={() => {
                   setNewMenuOpen(false);
                   handleQuickWaSync();
@@ -362,7 +364,8 @@ function AppLayout() {
                 <KerfaIcon name="refresh" />
                 <span>WhatsApp-Gruppe synchronisieren</span>
               </button>
-              <div className="pop__sep" />
+              <div className="menu__sep" />
+              <div className="menu__label">Alle 11 Anbieter-Sparten</div>
               <div
                 style={{
                   display: "grid",
@@ -374,8 +377,7 @@ function AppLayout() {
                   <button
                     key={p.id}
                     type="button"
-                    className="pop__item"
-                    style={{ height: 32, fontSize: "var(--fs-xs)" }}
+                    className="menu__item"
                     onClick={() => {
                       setNewMenuOpen(false);
                       navigate({
@@ -394,29 +396,31 @@ function AppLayout() {
           {/* Account Menu Popover */}
           {accountOpen && (
             <div
-              className="pop glass"
-              style={{ right: 0, top: "calc(100% + 10px)", width: 250 }}
+              className="pop"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "calc(100% + 10px)",
+                width: 250,
+              }}
             >
-              <div className="pop__head">
-                <div className="pop__title">{userName}</div>
-                <div className="pop__sub">
-                  {user.email} · {isAdmin ? "Admin" : "Mitarbeiter"}
-                </div>
+              <div className="menu__label">
+                {userName} · {isAdmin ? "Admin" : "Mitarbeiter"}
               </div>
               <button
                 type="button"
-                className="pop__item"
+                className="menu__item"
                 onClick={() => {
                   setAccountOpen(false);
                   navigate({ to: "/settings" });
                 }}
               >
                 <KerfaIcon name="swatch" />
-                <span>Erscheinungsbild &amp; Hintergrund</span>
+                <span>Erscheinungsbild</span>
               </button>
               <button
                 type="button"
-                className="pop__item"
+                className="menu__item"
                 onClick={() => {
                   setAccountOpen(false);
                   navigate({ to: "/inbox" });
@@ -425,15 +429,14 @@ function AppLayout() {
                 <KerfaIcon name="chat" />
                 <span>WhatsApp-Eingang</span>
               </button>
-              <div className="pop__sep" />
+              <div className="menu__sep" />
               <button
                 type="button"
-                className="pop__item"
+                className="menu__item menu__item--danger"
                 onClick={() => {
                   setAccountOpen(false);
                   signOut();
                 }}
-                style={{ color: "var(--bad)" }}
               >
                 <KerfaIcon name="logout" />
                 <span>Abmelden</span>
@@ -466,7 +469,6 @@ function AppLayout() {
             <Link
               key={item.id}
               to={item.to}
-              className="tabbar__item"
               aria-current={isCurrent ? "page" : undefined}
               data-pill-active={isCurrent ? "true" : undefined}
             >
@@ -477,99 +479,101 @@ function AppLayout() {
         })}
       </nav>
 
-      {/* Kerfa Command Finder (⌘K) */}
+      {/* Kerfa Command Finder (⌘K) using exact .finder / .finder__in / .finder__ico */}
       {finderOpen && (
         <>
           <div className="scrim" onClick={() => setFinderOpen(false)} />
-          <div className="finder-wrap" onClick={() => setFinderOpen(false)}>
-            <div
-              className="finder"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="finder__head">
-                <KerfaIcon name="search" />
-                <input
-                  autoFocus
-                  value={finderQuery}
-                  onChange={(e) => {
-                    setFinderQuery(e.target.value);
-                    setFinderIdx(0);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      setFinderIdx((i) =>
-                        Math.min(filteredFinder.length - 1, i + 1)
-                      );
-                    } else if (e.key === "ArrowUp") {
-                      e.preventDefault();
-                      setFinderIdx((i) => Math.max(0, i - 1));
-                    } else if (
-                      e.key === "Enter" &&
-                      filteredFinder[finderIdx]
-                    ) {
-                      e.preventDefault();
-                      filteredFinder[finderIdx].run();
-                      setFinderOpen(false);
-                    }
-                  }}
-                  placeholder="Zu Anbieter, Ansicht oder Aktion springen…"
-                />
-                <span className="kbd">ESC</span>
-              </div>
-              <div className="finder__list">
-                {filteredFinder.length === 0 ? (
-                  <div
-                    style={{
-                      padding: 24,
-                      textAlign: "center",
-                      color: "var(--ink-3)",
-                      fontSize: "var(--fs-sm)",
-                    }}
-                  >
-                    Keine Treffer für „{finderQuery}“
-                  </div>
-                ) : (
-                  filteredFinder.map((item, idx) => {
-                    const prevGroup =
-                      idx > 0 ? filteredFinder[idx - 1].group : null;
-                    return (
-                      <div key={`${item.group}-${item.label}`}>
-                        {item.group !== prevGroup && (
-                          <div className="finder__group">{item.group}</div>
-                        )}
-                        <button
-                          type="button"
-                          className={`finder__item ${
-                            idx === finderIdx ? "is-on" : ""
-                          }`}
-                          onMouseEnter={() => setFinderIdx(idx)}
-                          onClick={() => {
-                            item.run();
-                            setFinderOpen(false);
-                          }}
-                        >
-                          <KerfaIcon name={item.icon} />
-                          <span>{item.label}</span>
-                          <span className="finder__meta">{item.sub}</span>
-                        </button>
-                      </div>
+          <div
+            className="finder"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="finder__in">
+              <KerfaIcon name="search" />
+              <input
+                autoFocus
+                value={finderQuery}
+                onChange={(e) => {
+                  setFinderQuery(e.target.value);
+                  setFinderIdx(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setFinderIdx((i) =>
+                      Math.min(filteredFinder.length - 1, i + 1)
                     );
-                  })
-                )}
-              </div>
-              <div className="finder__foot">
-                <span>
-                  <kbd className="kbd">↑</kbd> <kbd className="kbd">↓</kbd>{" "}
-                  Navigieren
-                </span>
-                <span>
-                  <kbd className="kbd">↵</kbd> Öffnen
-                </span>
-                <span>11 Anbieter · Live-WhatsApp</span>
-              </div>
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setFinderIdx((i) => Math.max(0, i - 1));
+                  } else if (
+                    e.key === "Enter" &&
+                    filteredFinder[finderIdx]
+                  ) {
+                    e.preventDefault();
+                    filteredFinder[finderIdx].run();
+                    setFinderOpen(false);
+                  }
+                }}
+                placeholder="Zu Anbieter, Ansicht oder Aktion springen…"
+              />
+              <span className="kbd">ESC</span>
+            </div>
+            <div className="finder__list">
+              {filteredFinder.length === 0 ? (
+                <div
+                  className="muted"
+                  style={{
+                    padding: 24,
+                    textAlign: "center",
+                    fontSize: "var(--fs-sm)",
+                  }}
+                >
+                  Keine Treffer für „{finderQuery}“
+                </div>
+              ) : (
+                filteredFinder.map((item, idx) => {
+                  const prevGroup =
+                    idx > 0 ? filteredFinder[idx - 1].group : null;
+                  return (
+                    <div key={`${item.group}-${item.label}`}>
+                      {item.group !== prevGroup && (
+                        <div className="finder__group">{item.group}</div>
+                      )}
+                      <button
+                        type="button"
+                        className="finder__item"
+                        aria-selected={idx === finderIdx}
+                        onMouseEnter={() => setFinderIdx(idx)}
+                        onClick={() => {
+                          item.run();
+                          setFinderOpen(false);
+                        }}
+                      >
+                        <span className="finder__ico">
+                          <KerfaIcon name={item.icon} />
+                        </span>
+                        <div className="cell__text">
+                          <b>{item.label}</b>
+                          <small>{item.sub}</small>
+                        </div>
+                        <KerfaIcon name="arrowR" size="sm" />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <div className="finder__foot">
+              <span>
+                <kbd className="kbd">↑</kbd> <kbd className="kbd">↓</kbd>{" "}
+                Navigieren
+              </span>
+              <span>
+                <kbd className="kbd">↵</kbd> Öffnen
+              </span>
+              <span>11 Anbieter · Live-WhatsApp</span>
             </div>
           </div>
         </>

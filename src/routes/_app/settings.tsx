@@ -37,13 +37,13 @@ const ACCENT_OPTIONS: {
   label: string;
   color: string;
 }[] = [
-  { id: "terracotta", label: "Terracotta", color: "#e06538" },
-  { id: "cobalt", label: "Cobalt", color: "#2d64e6" },
-  { id: "forest", label: "Forest", color: "#1e7a52" },
-  { id: "graphite", label: "Graphite", color: "#525866" },
-  { id: "amber", label: "Amber", color: "#d48518" },
-  { id: "teal", label: "Teal", color: "#157f8c" },
-  { id: "rose", label: "Rose", color: "#c93b6b" },
+  { id: "terracotta", label: "Terracotta", color: "#ad4622" },
+  { id: "cobalt", label: "Cobalt", color: "#2450a6" },
+  { id: "forest", label: "Forest", color: "#2c6a45" },
+  { id: "graphite", label: "Graphite", color: "#2b2825" },
+  { id: "amber", label: "Amber", color: "#8f5c08" },
+  { id: "teal", label: "Teal", color: "#0c6762" },
+  { id: "rose", label: "Rose", color: "#b3325a" },
 ];
 
 const BACKDROP_OPTIONS: {
@@ -168,168 +168,160 @@ function SettingsPage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div>
       <PageHead
         eyebrow="Kerfa Studio-Konfiguration · System & Rollen"
         title="Einstellungen & Erscheinungsbild"
         sub="Passe das Kerfa-Glasdesign, Hintergrund-Szenen, Akzentfarben, WhatsApp-Anbindung und Benutzerberechtigungen an."
-        actions={
-          <KerfaTabs
-            value={tab}
-            onChange={setTab}
-            items={[
-              {
-                value: "appearance",
-                label: "Erscheinungsbild",
-                icon: "swatch",
-              },
-              {
-                value: "whatsapp",
-                label: "WhatsApp & Webhook",
-                icon: "chat",
-              },
-              {
-                value: "users",
-                label: "Team & Rollen",
-                icon: "users",
-                count: members.length || undefined,
-              },
-            ]}
-          />
-        }
+      />
+
+      <KerfaTabs
+        value={tab}
+        onChange={setTab}
+        items={[
+          {
+            value: "appearance",
+            label: "Erscheinungsbild",
+            icon: "swatch",
+          },
+          {
+            value: "whatsapp",
+            label: "WhatsApp & Webhook",
+            icon: "chat",
+          },
+          {
+            value: "users",
+            label: "Team & Rollen",
+            icon: "users",
+            count: members.length || undefined,
+          },
+        ]}
       />
 
       {tab === "appearance" && (
         <div className="st-grid">
-          <div className="st-col">
-            <div className="card">
-              <div className="chead">
-                <div>
-                  <div className="chead__title">Farbmodus</div>
-                  <div className="chead__sub">
-                    Wähle zwischen hellem Kerfa-Alabaster, dunklem Espresso-Glas
-                    oder Systemautomatik
-                  </div>
-                </div>
-                <Pill tone="accent" dot={false}>
-                  {theme.toUpperCase()}
-                </Pill>
+          {/* Theme Mode Card (exact .st-tiles / .st-tile / .st-tile__art) */}
+          <div className="card">
+            <div className="chead">
+              <div className="chead__text">
+                <h2>Farbmodus</h2>
+                <p>
+                  Wähle zwischen hellem Kerfa-Alabaster, dunklem Espresso-Glas
+                  oder Systemautomatik
+                </p>
               </div>
-
-              <div className="st-tiles">
-                {(
-                  [
-                    { id: "light", label: "Hell (Alabaster)" },
-                    { id: "dark", label: "Dunkel (Studio)" },
-                    { id: "system", label: "System" },
-                  ] as { id: KerfaTheme; label: string }[]
-                ).map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className={`st-tile ${theme === t.id ? "is-on" : ""}`}
-                    onClick={() => setTheme(t.id)}
-                  >
-                    <div className={`st-tile__prev st-tile__prev--${t.id}`}>
-                      <span />
-                      <i />
-                      <b />
-                    </div>
-                    <div className="st-tile__lbl">{t.label}</div>
-                  </button>
-                ))}
-              </div>
+              <Pill tone="accent" dot={false}>
+                {theme.toUpperCase()}
+              </Pill>
             </div>
 
-            <div className="card">
-              <div className="chead">
-                <div>
-                  <div className="chead__title">
-                    Studio-Hintergrund (Backdrop)
-                  </div>
-                  <div className="chead__sub">
-                    Atmosphärischer Hintergrund hinter den Milchglas-Karten
-                  </div>
-                </div>
-              </div>
-
-              <div className="st-room">
-                {BACKDROP_OPTIONS.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    className={`st-room__opt ${
-                      backdrop === b.id ? "is-on" : ""
-                    }`}
-                    onClick={() => setBackdrop(b.id)}
-                  >
-                    {b.img ? (
-                      <img src={b.img} alt={b.label} />
-                    ) : (
-                      <div className="st-room__plain" />
-                    )}
-                    <span>{b.label}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="st-tiles">
+              {(
+                [
+                  { id: "light", label: "Hell (Alabaster)", cls: "" },
+                  { id: "dark", label: "Dunkel (Studio)", cls: "st-tile--dark" },
+                  { id: "system", label: "System", cls: "st-tile--system" },
+                ] as { id: KerfaTheme; label: string; cls: string }[]
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === t.id}
+                  className={`st-tile ${t.cls}`.trim()}
+                  onClick={() => setTheme(t.id)}
+                >
+                  <span className="st-tile__art">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <b>{t.label}</b>
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="st-col">
-            <div className="card">
-              <div className="chead">
-                <div>
-                  <div className="chead__title">Akzentfarbe</div>
-                  <div className="chead__sub">
-                    Steuert Diagramme, Primär-Buttons, Fokus-Ringe und Badges
-                  </div>
-                </div>
-              </div>
-
-              <div className="st-accents">
-                {ACCENT_OPTIONS.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    className={`st-accent ${accent === a.id ? "is-on" : ""}`}
-                    onClick={() => setAccent(a.id)}
-                  >
-                    <i style={{ background: a.color }} />
-                    <span>{a.label}</span>
-                  </button>
-                ))}
+          {/* Studio Backdrop Photo Selector (exact .st-tiles / .st-room__art) */}
+          <div className="card">
+            <div className="chead">
+              <div className="chead__text">
+                <h2>Studio-Hintergrund (Backdrop)</h2>
+                <p>Atmosphärischer Hintergrund hinter den Milchglas-Karten</p>
               </div>
             </div>
 
-            <div className="card">
-              <div className="chead">
-                <div>
-                  <div className="chead__title">
-                    Darstellung &amp; Glas-Effekte
-                  </div>
-                  <div className="chead__sub">
-                    Feinabstimmung für Lesbarkeit und Kontrast
-                  </div>
-                </div>
-              </div>
+            <div className="st-tiles">
+              {BACKDROP_OPTIONS.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={backdrop === b.id}
+                  className="st-tile"
+                  onClick={() => setBackdrop(b.id)}
+                >
+                  <span className="st-room__art">
+                    {b.img && <img src={b.img} alt={b.label} />}
+                    <i />
+                  </span>
+                  <b>{b.label}</b>
+                </button>
+              ))}
+            </div>
+          </div>
 
-              <div className="st-list">
-                <div className="st-row">
-                  <div>
-                    <div className="st-row__title">
-                      Transparenz reduzieren (Solide Karten)
-                    </div>
-                    <div className="st-row__sub">
-                      Deaktiviert den Milchglas-Blur (`is-solid`) für maximalen
-                      Textkontrast
-                    </div>
-                  </div>
-                  <Switch
-                    checked={solid}
-                    onChange={setSolid}
-                    label="Transparenz reduzieren"
-                  />
+          {/* Accent Color Swatches (exact .st-accents / .st-accent) */}
+          <div className="card">
+            <div className="chead">
+              <div className="chead__text">
+                <h2>Akzentfarbe</h2>
+                <p>Steuert Diagramme, Primär-Buttons, Fokus-Ringe und Badges</p>
+              </div>
+            </div>
+
+            <div className="st-accents">
+              {ACCENT_OPTIONS.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={accent === a.id}
+                  className="st-accent"
+                  onClick={() => setAccent(a.id)}
+                >
+                  <i style={{ background: a.color }}>
+                    <KerfaIcon name="check" size="sm" />
+                  </i>
+                  <span>{a.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Glass / Solid Surface Toggle (exact .row-set) */}
+          <div className="card">
+            <div className="chead">
+              <div className="chead__text">
+                <h2>Darstellung &amp; Glas-Effekte</h2>
+                <p>Feinabstimmung für Lesbarkeit und Kontrast</p>
+              </div>
+            </div>
+
+            <div>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>Transparenz reduzieren (Solide Karten)</b>
+                  <small>
+                    Deaktiviert den Milchglas-Blur (`is-solid`) für maximalen
+                    Textkontrast
+                  </small>
                 </div>
+                <Switch
+                  checked={solid}
+                  onChange={setSolid}
+                  label="Transparenz reduzieren"
+                />
               </div>
             </div>
           </div>
@@ -340,33 +332,37 @@ function SettingsPage() {
         <div className="st-grid">
           <div className="card">
             <div className="chead">
-              <div>
-                <div className="chead__title">
-                  OpenWA WhatsApp-Gruppen-Anbindung
-                </div>
-                <div className="chead__sub">
+              <div className="chead__text">
+                <h2>OpenWA WhatsApp-Gruppen-Anbindung</h2>
+                <p>
                   Empfängt und sortiert alle Aufträge aus der WhatsApp-Gruppe
                   TDO Provision-Hub
-                </div>
+                </p>
               </div>
-              <Pill tone="ok">Aktiv &amp; Verbunden</Pill>
+              <Pill tone="good">Aktiv &amp; Verbunden</Pill>
             </div>
 
-            <div className="kv" style={{ marginBottom: 14 }}>
-              <div>
-                <dt>WhatsApp Gruppen-ID</dt>
-                <dd className="mono">{TDO_GROUP_CHAT_ID}</dd>
+            <div style={{ marginBottom: 14 }}>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>WhatsApp Gruppen-ID</b>
+                  <small>{TDO_GROUP_CHAT_ID}</small>
+                </div>
               </div>
-              <div>
-                <dt>OpenWA Server &amp; Session</dt>
-                <dd className="mono">
-                  {DEFAULT_OPENWA_BASE_URL} (
-                  {DEFAULT_OPENWA_SESSION_ID.slice(0, 8)}…)
-                </dd>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>OpenWA Server &amp; Session</b>
+                  <small>
+                    {DEFAULT_OPENWA_BASE_URL} (
+                    {DEFAULT_OPENWA_SESSION_ID.slice(0, 8)}…)
+                  </small>
+                </div>
               </div>
-              <div>
-                <dt>Neue Tippgeber (VB)</dt>
-                <dd>Automatische Anlage bei neuen VBs</dd>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>Neue Tippgeber (VB)</b>
+                  <small>Automatische Anlage bei neuen VBs</small>
+                </div>
               </div>
             </div>
 
@@ -387,19 +383,17 @@ function SettingsPage() {
 
           <div className="card">
             <div className="chead">
-              <div>
-                <div className="chead__title">
-                  Webhook-Endpunkt (OpenWA &amp; Twilio)
-                </div>
-                <div className="chead__sub">
+              <div className="chead__text">
+                <h2>Webhook-Endpunkt (OpenWA &amp; Twilio)</h2>
+                <p>
                   Öffentliche HTTP POST / GET Route für eingehende
                   WhatsApp-Events
-                </div>
+                </p>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input readOnly className="input mono" value={webhookUrl} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input readOnly className="input" value={webhookUrl} />
               <button
                 type="button"
                 className="btn btn--primary"
@@ -415,24 +409,24 @@ function SettingsPage() {
 
       {tab === "users" && (
         <div className="card card--flush">
-          <div className="chead">
-            <div>
-              <div className="chead__title">Team &amp; Benutzerrollen</div>
-              <div className="chead__sub">
+          <div className="chead" style={{ paddingBottom: 14 }}>
+            <div className="chead__text">
+              <h2>Team &amp; Benutzerrollen</h2>
+              <p>
                 Admins können Datensätze löschen und den WhatsApp-Eingang
                 einsehen
-              </div>
+              </p>
             </div>
           </div>
 
           <div className="table-wrap">
-            <table className="table table--cards">
+            <table className="table table--stack">
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>E-Mail</th>
                   <th>Rolle</th>
-                  <th className="num">Aktion</th>
+                  <th className="r">Aktion</th>
                 </tr>
               </thead>
               <tbody>
@@ -441,28 +435,25 @@ function SettingsPage() {
                   return (
                     <tr key={m.id}>
                       <td data-label="Name">
-                        <div className="row-title">
+                        <div className="cell">
                           <Avatar
                             name={m.display_name || m.email || "U"}
-                            size="sm"
                             online
                           />
-                          <div className="row-title__text">
-                            <span className="row-title__main">
-                              {m.display_name ?? m.email}
-                            </span>
+                          <div className="cell__text">
+                            <b>{m.display_name ?? m.email}</b>
                           </div>
                         </div>
                       </td>
-                      <td data-label="E-Mail" className="mono">
+                      <td data-label="E-Mail" className="muted">
                         {m.email}
                       </td>
                       <td data-label="Rolle">
-                        <Pill tone={isAdminUser ? "ok" : "neutral"}>
+                        <Pill tone={isAdminUser ? "good" : "plain"}>
                           {isAdminUser ? "Admin" : "Mitarbeiter"}
                         </Pill>
                       </td>
-                      <td data-label="Aktion" className="num">
+                      <td data-label="Aktion" className="r">
                         <button
                           type="button"
                           className="btn btn--sm"

@@ -38,7 +38,7 @@ interface KerfaPrefsState {
 
 const KerfaPrefsContext = createContext<KerfaPrefsState | null>(null);
 
-const STORAGE_KEY = "tdo.kerfa.prefs.v1";
+const STORAGE_KEY = "tdo.kerfa.prefs.v2";
 
 export function KerfaPrefsProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<KerfaTheme>("dark");
@@ -490,7 +490,9 @@ function renderIconPath(name: KerfaIconName) {
         </>
       );
     case "shield":
-      return <path d="M12 3 4.5 6v5.8c0 5 3.2 8.4 7.5 9.7 4.3-1.3 7.5-4.7 7.5-9.7V6z" />;
+      return (
+        <path d="M12 3 4.5 6v5.8c0 5 3.2 8.4 7.5 9.7 4.3-1.3 7.5-4.7 7.5-9.7V6z" />
+      );
     case "key":
       return (
         <>
@@ -757,14 +759,16 @@ export function useSlidingPill(
   containerRef: React.RefObject<HTMLElement | null>,
   activeKey: string | number
 ) {
-  const [clipPath, setClipPath] = useState<string>("inset(0 100% 0 0 round 99px)");
+  const [clipPath, setClipPath] = useState<string>(
+    "inset(0 100% 0 0 round 99px)"
+  );
   const [ready, setReady] = useState(false);
 
   const update = () => {
     const root = containerRef.current;
     if (!root) return;
     const activeEl = root.querySelector<HTMLElement>(
-      '[data-pill-active="true"], [aria-current="page"], .is-on'
+      '[data-pill-active="true"], [aria-current="page"], [aria-pressed="true"]'
     );
     if (!activeEl) {
       setReady(false);
@@ -811,7 +815,6 @@ export function Avatar({
   size,
   tone,
   online,
-  square,
 }: {
   name?: string;
   size?: "xs" | "sm" | "lg" | "xl";
@@ -835,8 +838,7 @@ export function Avatar({
 
   const cls = [
     "av",
-    size ? `av--${size}` : "",
-    square ? "av--sq" : "",
+    size === "xs" ? "av--sm" : size ? `av--${size}` : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -849,19 +851,43 @@ export function Avatar({
   );
 }
 
-export type KerfaTone = "ok" | "warn" | "bad" | "info" | "accent" | "neutral";
+export type KerfaTone =
+  | "ok"
+  | "good"
+  | "warn"
+  | "bad"
+  | "info"
+  | "accent"
+  | "neutral"
+  | "plain";
 
 export function Pill({
   tone = "neutral",
   dot = true,
+  style,
   children,
 }: {
   tone?: KerfaTone;
   dot?: boolean;
+  style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
+  const mappedTone =
+    tone === "ok"
+      ? "good"
+      : tone === "neutral" || tone === "plain"
+        ? ""
+        : tone;
+  const cls = [
+    "pill",
+    mappedTone ? `pill--${mappedTone}` : "",
+    !dot ? "pill--plain" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <span className={`pill pill--${tone} ${dot ? "" : "pill--nodot"}`.trim()}>
+    <span className={cls} style={style}>
       {children}
     </span>
   );
@@ -870,9 +896,11 @@ export function Pill({
 export function Delta({
   value,
   suffix = "%",
+  note,
 }: {
   value: number;
   suffix?: string;
+  note?: string;
 }) {
   const up = value >= 0;
   return (
@@ -881,6 +909,7 @@ export function Delta({
       {up ? "+" : ""}
       {value.toFixed(1)}
       {suffix}
+      {note && <em>{note}</em>}
     </span>
   );
 }
@@ -892,14 +921,14 @@ export function LevelBar({
 }: {
   value: number;
   max?: number;
-  tone?: "ok" | "warn" | "bad";
+  tone?: "ok" | "good" | "warn" | "bad";
 }) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  const pct = Math.max(0, Math.min(100, (value / Math.max(1, max)) * 100));
+  const mapped = tone === "ok" ? "good" : tone;
   return (
-    <div className={`level ${tone ? `level--${tone}` : ""}`.trim()}>
+    <div className={`level ${mapped ? `level--${mapped}` : ""}`.trim()}>
       <i
         style={{
-          width: "100%",
           transform: `scaleX(${pct / 100})`,
           transition: "transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
@@ -915,9 +944,11 @@ export function LevelBar({
 export function Sparkline({
   points = [],
   tone,
+  className = "",
 }: {
   points: number[];
-  tone?: "ok" | "bad";
+  tone?: "ok" | "good" | "bad";
+  className?: string;
 }) {
   if (!points.length) return null;
   const w = 92;
@@ -938,15 +969,17 @@ export function Sparkline({
   }, "");
   const area = `${d} L${coords[coords.length - 1][0].toFixed(1)},${h} L${coords[0][0].toFixed(1)},${h} Z`;
   const color =
-    tone === "ok"
-      ? "var(--ok)"
+    tone === "ok" || tone === "good"
+      ? "var(--good)"
       : tone === "bad"
         ? "var(--bad)"
         : "var(--accent)";
 
   return (
     <svg
-      className="spark"
+      className={`spark ${className}`.trim()}
+      width={w}
+      height={h}
       viewBox={`0 0 ${w} ${h}`}
       style={{ color }}
       aria-hidden="true"
@@ -972,8 +1005,6 @@ export function AreaChart({
   labels = [],
   height = 220,
   format = (v: number) => `${v.toLocaleString("de-DE")} €`,
-  seriesLabel = "Aktuell",
-  compareLabel = "Vormonat",
 }: {
   series: number[];
   compare?: number[];
@@ -987,12 +1018,12 @@ export function AreaChart({
   const w = 640;
   const h = height;
   const padX = 8;
-  const padT = 16;
+  const padT = 14;
   const padB = 26;
 
   const allValues = [...series, ...compare];
-  const min = Math.min(...allValues) * 0.92;
-  const max = Math.max(...allValues) * 1.04 || 1;
+  const min = Math.min(0, ...allValues);
+  const max = Math.max(...allValues) * 1.05 || 1;
   const span = max - min || 1;
 
   const toPoints = (arr: number[]): [number, number][] =>
@@ -1009,44 +1040,50 @@ export function AreaChart({
     : "";
   const cmpLine = cmpPts.length ? buildSmoothCurve(cmpPts) : "";
 
-  const ticks = [0, 0.5, 1].map((t) => Math.round(min + span * (1 - t)));
+  const ticks = [1, 0.5, 0].map((t) => Math.round(min + span * t));
 
   return (
     <div
       className="area"
-      style={{ height }}
+      style={{ height: h }}
       onMouseMove={(e) => {
         if (!pts.length) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const rel = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const svgEl = e.currentTarget.querySelector("svg");
+        if (!svgEl) return;
+        const rect = svgEl.getBoundingClientRect();
+        const rel = Math.max(
+          0,
+          Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width))
+        );
         setHoverIdx(Math.round(rel * (pts.length - 1)));
       }}
       onMouseLeave={() => setHoverIdx(null)}
     >
-      <div className="area__grid">
+      <div className="area__grid" style={{ top: padT, bottom: padB }}>
         {ticks.map((tv, idx) => (
-          <div key={idx} className="area__gridline">
+          <div key={idx}>
             <span>{format(tv)}</span>
           </div>
         ))}
       </div>
       <svg
         className="area__svg"
+        width="100%"
+        height={h}
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="none"
       >
         <defs>
           <linearGradient id="kerfaAreaFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.34" />
-            <stop offset="85%" stopColor="var(--accent)" stopOpacity="0.02" />
             <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
           </linearGradient>
         </defs>
-        {area && <path className="area__fill" d={area} fill="url(#kerfaAreaFill)" />}
         {cmpLine && <path className="area__cmp" d={cmpLine} />}
+        {area && <path d={area} fill="url(#kerfaAreaFill)" />}
         {line && <path className="area__line" d={line} />}
         {hoverIdx !== null && pts[hoverIdx] && (
-          <g className="area__hover">
+          <g>
             <line
               x1={pts[hoverIdx][0]}
               x2={pts[hoverIdx][0]}
@@ -1054,18 +1091,10 @@ export function AreaChart({
               y2={h - padB}
               className="area__cursor"
             />
-            {cmpPts[hoverIdx] && (
-              <circle
-                cx={cmpPts[hoverIdx][0]}
-                cy={cmpPts[hoverIdx][1]}
-                r="3.5"
-                className="area__dot area__dot--cmp"
-              />
-            )}
             <circle
               cx={pts[hoverIdx][0]}
               cy={pts[hoverIdx][1]}
-              r="4.5"
+              r="5"
               className="area__dot"
             />
           </g>
@@ -1073,7 +1102,12 @@ export function AreaChart({
       </svg>
       <div className="area__x">
         {labels.map((lb, idx) => (
-          <span key={idx} className={hoverIdx === idx ? "is-on" : ""}>
+          <span
+            key={idx}
+            style={{
+              left: `${(idx / Math.max(1, labels.length - 1)) * 100}%`,
+            }}
+          >
             {lb}
           </span>
         ))}
@@ -1082,22 +1116,19 @@ export function AreaChart({
         <div
           className="charttip"
           style={{
-            left: `${(pts[hoverIdx][0] / w) * 100}%`,
+            left: `calc(48px + (100% - 48px) * ${
+              hoverIdx / Math.max(1, pts.length - 1)
+            })`,
+            top: Math.max(4, pts[hoverIdx][1] - 46),
           }}
         >
-          <div className="charttip__k">{labels[hoverIdx]}</div>
-          <div className="charttip__row">
-            <i style={{ background: "var(--accent)" }} />
-            <span>{seriesLabel}</span>
-            <b>{format(series[hoverIdx])}</b>
-          </div>
-          {compare[hoverIdx] != null && (
-            <div className="charttip__row">
-              <i style={{ background: "var(--ink-3)" }} />
-              <span>{compareLabel}</span>
-              <b>{format(compare[hoverIdx])}</b>
-            </div>
-          )}
+          <b>{format(series[hoverIdx])}</b>
+          <small>
+            {labels[hoverIdx]}
+            {compare[hoverIdx] != null
+              ? ` · Basis ${format(compare[hoverIdx])}`
+              : ""}
+          </small>
         </div>
       )}
     </div>
@@ -1121,7 +1152,7 @@ export function Segmented<T extends string>({
   const { clipPath, ready } = useSlidingPill(ref, value);
 
   return (
-    <div className="seg" role="tablist" ref={ref}>
+    <div className="seg" role="group" ref={ref}>
       <span
         className="seg__thumb"
         aria-hidden="true"
@@ -1133,10 +1164,8 @@ export function Segmented<T extends string>({
           <button
             key={o.value}
             type="button"
-            role="tab"
-            aria-selected={active}
+            aria-pressed={active}
             data-pill-active={active ? "true" : undefined}
-            className={`seg__btn ${active ? "is-on" : ""}`.trim()}
             onClick={() => onChange(o.value)}
           >
             {o.icon && <KerfaIcon name={o.icon} size="sm" />}
@@ -1175,9 +1204,8 @@ export function KerfaTabs<T extends string>({
             key={it.value}
             type="button"
             role="tab"
-            aria-selected={active}
+            aria-current={active ? "page" : undefined}
             data-pill-active={active ? "true" : undefined}
-            className={`tabs__btn ${active ? "is-on" : ""}`.trim()}
             onClick={() => onChange(it.value)}
           >
             {it.icon && <KerfaIcon name={it.icon} size="sm" />}
@@ -1201,20 +1229,31 @@ export function Chips<T extends string>({
 }) {
   return (
     <div className="chips">
-      {items.map((it) => (
-        <button
-          key={it.value}
-          type="button"
-          className={`chip ${value === it.value ? "is-on" : ""}`.trim()}
-          onClick={() => onChange(it.value)}
-        >
-          {it.dot && (
-            <i className="chip__dot" style={{ background: it.dot }} />
-          )}
-          <span>{it.label}</span>
-          {it.count != null && <span className="badge">{it.count}</span>}
-        </button>
-      ))}
+      {items.map((it) => {
+        const active = value === it.value;
+        return (
+          <button
+            key={it.value}
+            type="button"
+            className="chip"
+            aria-pressed={active}
+            onClick={() => onChange(it.value)}
+          >
+            {it.dot && (
+              <i
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: it.dot,
+                }}
+              />
+            )}
+            <span>{it.label}</span>
+            {it.count != null && <span className="badge">{it.count}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1239,16 +1278,6 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
-      {value && (
-        <button
-          type="button"
-          className="inwrap__clear"
-          onClick={() => onChange("")}
-          aria-label="Suche löschen"
-        >
-          <KerfaIcon name="close" size="sm" />
-        </button>
-      )}
     </div>
   );
 }
@@ -1268,9 +1297,11 @@ export function Switch({
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      className={`switch ${checked ? "is-on" : ""}`.trim()}
+      className="switch"
       onClick={() => onChange(!checked)}
-    />
+    >
+      <i />
+    </button>
   );
 }
 
@@ -1287,7 +1318,7 @@ export function PageHead({
 }) {
   return (
     <header className="phead">
-      <div className="phead__title">
+      <div className="phead__text">
         {eyebrow && (
           <span className="phead__eyebrow">
             <i />
@@ -1295,7 +1326,7 @@ export function PageHead({
           </span>
         )}
         <h1>{title}</h1>
-        {sub && <p className="phead__sub">{sub}</p>}
+        {sub && <p>{sub}</p>}
       </div>
       {actions && <div className="phead__actions">{actions}</div>}
     </header>
@@ -1315,10 +1346,10 @@ export function EmptyState({
 }) {
   return (
     <div className="empty">
-      <div className="empty__ico">
+      <div className="empty__icon">
         <KerfaIcon name={icon} />
       </div>
-      <div className="empty__title">{title}</div>
+      <b>{title}</b>
       {sub && <p>{sub}</p>}
       {action}
     </div>
@@ -1360,35 +1391,17 @@ export function KerfaDrawer({
       <div className="scrim" onClick={onClose} />
       <aside className="drawer" aria-modal="true" role="dialog">
         <header className="drawer__head">
-          <div style={{ minWidth: 0 }}>
-            {subtitle && (
-              <div
-                style={{
-                  fontSize: "var(--fs-xs)",
-                  color: "var(--ink-3)",
-                  marginBottom: 2,
-                }}
-              >
-                {subtitle}
-              </div>
-            )}
-            <h2
-              style={{
-                fontSize: "var(--fs-lg)",
-                fontWeight: 600,
-                letterSpacing: "-0.015em",
-              }}
-            >
-              {title}
-            </h2>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2>{title}</h2>
+            {subtitle && <p>{subtitle}</p>}
           </div>
           <button
             type="button"
-            className="ibtn"
+            className="ibtn ibtn--sm"
             onClick={onClose}
             aria-label="Schließen"
           >
-            <KerfaIcon name="close" />
+            <KerfaIcon name="close" size="sm" />
           </button>
         </header>
         <div className="drawer__body">{children}</div>
@@ -1432,33 +1445,23 @@ export function KerfaModal({
       <div className="modal-wrap" onClick={onClose}>
         <div
           className="modal"
-          style={{ maxWidth }}
+          style={{ width: `min(${maxWidth}px, 100%)` }}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
         >
           <header className="modal__head">
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <h2>{title}</h2>
-              {subtitle && (
-                <p
-                  style={{
-                    fontSize: "var(--fs-xs)",
-                    color: "var(--ink-3)",
-                    marginTop: 2,
-                  }}
-                >
-                  {subtitle}
-                </p>
-              )}
+              {subtitle && <p>{subtitle}</p>}
             </div>
             <button
               type="button"
-              className="ibtn"
+              className="ibtn ibtn--sm"
               onClick={onClose}
               aria-label="Schließen"
             >
-              <KerfaIcon name="close" />
+              <KerfaIcon name="close" size="sm" />
             </button>
           </header>
           <div className="modal__body">{children}</div>

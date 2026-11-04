@@ -23,7 +23,7 @@ import {
 } from "@/components/kerfa/KerfaKit";
 
 const STATUS_TONE: Record<string, KerfaTone> = {
-  booked: "ok",
+  booked: "good",
   open: "info",
   review: "warn",
   cancelled: "bad",
@@ -142,7 +142,7 @@ export function RecordsTable({
       {
         id: "booked",
         label: "Gebucht",
-        tone: "ok" as const,
+        tone: "good" as const,
         ...compute("booked"),
       },
       {
@@ -400,7 +400,7 @@ export function RecordsTable({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div>
       <input
         ref={pdfInputRef}
         type="file"
@@ -455,7 +455,7 @@ export function RecordsTable({
 
       {headerNav}
 
-      {/* Kerfa 5-Step Fulfillment Pipeline (.of-flow) */}
+      {/* Kerfa 5-Step Fulfillment Pipeline (.of-flow > .card.of-step) */}
       <div className="of-flow">
         {flowSteps.map((st, idx) => {
           const active = statusFilter === st.id;
@@ -463,30 +463,18 @@ export function RecordsTable({
             <button
               key={st.id}
               type="button"
-              className="card of-step"
+              className={`card of-step ${active ? "is-on" : ""}`}
               onClick={() =>
                 setStatusFilter(active && st.id !== "all" ? "all" : st.id)
               }
-              style={{
-                textAlign: "left",
-                cursor: "pointer",
-                borderColor: active ? "var(--accent)" : undefined,
-                boxShadow: active
-                  ? "0 0 0 2px var(--accent-soft), var(--sh-sm)"
-                  : undefined,
-              }}
             >
-              <div className="of-step__top">
-                <span className="of-step__label">{st.label}</span>
-                <span className={`of-step__n of-step__n--${st.tone}`}>
-                  {st.count}
-                </span>
+              <span className={`of-step__n tone--${st.tone}`}>{st.count}</span>
+              <div className="cell__text">
+                <small>{st.label}</small>
+                <b>{formatEur(st.sum)}</b>
               </div>
-              <div className="of-step__val">{formatEur(st.sum)}</div>
               {idx < flowSteps.length - 1 && (
-                <span className="of-step__arrow" aria-hidden="true">
-                  <KerfaIcon name="chevR" size="sm" />
-                </span>
+                <KerfaIcon name="chevR" className="of-step__arrow" />
               )}
             </button>
           );
@@ -495,71 +483,62 @@ export function RecordsTable({
 
       {/* Main Flush Table Card */}
       <div className="card card--flush">
-        <div className="chead">
-          <div>
-            <div className="chead__title">
+        <div className="chead" style={{ paddingBottom: 14 }}>
+          <div className="chead__text">
+            <h2>
               {meta?.label || provider} Auftragsliste ({filteredRows.length})
-            </div>
-            <div className="chead__sub">
+            </h2>
+            <p>
               Klicke auf eine Zeile, um alle Sparten-Felder, Status und
               PDF-Belege im Studio-Drawer zu bearbeiten
-            </div>
+            </p>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
-            }}
+          <SearchInput
+            value={globalFilter}
+            onChange={setGlobalFilter}
+            placeholder={`In ${meta?.label || provider} suchen…`}
+            width={230}
+          />
+
+          <select
+            className="select"
+            value={vbFilter}
+            onChange={(e) => setVbFilter(e.target.value)}
+            aria-label="Nach VB filtern"
           >
-            <SearchInput
-              value={globalFilter}
-              onChange={setGlobalFilter}
-              placeholder={`In ${meta?.label || provider} suchen…`}
-              width={230}
-            />
+            <option value="__all__">Alle VBs ({vbList.length})</option>
+            {vbList.map((vb) => (
+              <option key={vb} value={vb}>
+                VB: {vb}
+              </option>
+            ))}
+          </select>
 
-            <select
-              className="select"
-              value={vbFilter}
-              onChange={(e) => setVbFilter(e.target.value)}
-              aria-label="Nach VB filtern"
+          {(statusFilter !== "all" ||
+            vbFilter !== "__all__" ||
+            globalFilter) && (
+            <button
+              type="button"
+              className="btn btn--sm btn--ghost"
+              onClick={() => {
+                setStatusFilter("all");
+                setVbFilter("__all__");
+                setGlobalFilter("");
+              }}
             >
-              <option value="__all__">Alle VBs ({vbList.length})</option>
-              {vbList.map((vb) => (
-                <option key={vb} value={vb}>
-                  VB: {vb}
-                </option>
-              ))}
-            </select>
-
-            {(statusFilter !== "all" ||
-              vbFilter !== "__all__" ||
-              globalFilter) && (
-              <button
-                type="button"
-                className="btn btn--sm btn--ghost"
-                onClick={() => {
-                  setStatusFilter("all");
-                  setVbFilter("__all__");
-                  setGlobalFilter("");
-                }}
-              >
-                Filter zurücksetzen
-              </button>
-            )}
-          </div>
+              Filter zurücksetzen
+            </button>
+          )}
         </div>
 
         <div className="table-wrap">
           {loading ? (
             <div
+              className="muted"
               style={{
                 padding: 36,
                 textAlign: "center",
-                color: "var(--ink-3)",
               }}
             >
               Lade {meta?.label || provider}-Datensätze…
@@ -581,7 +560,7 @@ export function RecordsTable({
               }
             />
           ) : (
-            <table className="table table--cards">
+            <table className="table table--stack">
               <thead>
                 <tr>
                   <th>Kunde / Vertragsnehmer</th>
@@ -591,8 +570,8 @@ export function RecordsTable({
                     <th key={col.key}>{col.label}</th>
                   ))}
                   <th>Status</th>
-                  <th className="num">Provision</th>
-                  <th className="num">Beleg &amp; Aktion</th>
+                  <th className="r">Provision</th>
+                  <th className="r">Beleg &amp; Aktion</th>
                 </tr>
               </thead>
               <tbody>
@@ -603,80 +582,62 @@ export function RecordsTable({
                   return (
                     <tr
                       key={rec.id}
+                      className="is-click"
                       onClick={() => openDrawer(rec)}
-                      style={{ cursor: "pointer" }}
                     >
                       <td data-label="Kunde">
-                        <div className="row-title">
+                        <div className="cell">
                           <Avatar
                             name={rec.customer_name || meta?.label || provider}
-                            size="sm"
                           />
-                          <div className="row-title__text">
-                            <span className="row-title__main">
-                              {rec.customer_name || "—"}
-                            </span>
-                            <span className="row-title__sub">
-                              {rec.record_date || "Ohne Datum"}
-                            </span>
+                          <div className="cell__text">
+                            <b>{rec.customer_name || "—"}</b>
+                            <small>{rec.record_date || "Ohne Datum"}</small>
                           </div>
                         </div>
                       </td>
 
                       <td data-label="VB / Tippgeber">
-                        <span style={{ fontWeight: 500 }}>
-                          {rec.tippgeber || "—"}
-                        </span>
+                        {rec.tippgeber || "—"}
                       </td>
 
-                      <td data-label="Tarif">
-                        <span
-                          style={{
-                            fontSize: "var(--fs-xs)",
-                            color: "var(--ink-2)",
-                          }}
-                        >
-                          {rec.tariff || "—"}
-                        </span>
+                      <td data-label="Tarif" className="muted">
+                        {rec.tariff || "—"}
                       </td>
 
                       {extraCols.slice(0, 4).map((col) => {
                         const val = rec.data?.[col.key];
                         return (
-                          <td key={col.key} data-label={col.label}>
-                            <span
-                              style={{
-                                fontSize: "var(--fs-xs)",
-                                color:
-                                  val != null && String(val).trim() !== ""
-                                    ? "var(--ink)"
-                                    : "var(--ink-3)",
-                              }}
-                            >
-                              {val != null && String(val).trim() !== ""
-                                ? String(val)
-                                : "—"}
-                            </span>
+                          <td
+                            key={col.key}
+                            data-label={col.label}
+                            className={
+                              val != null && String(val).trim() !== ""
+                                ? ""
+                                : "muted"
+                            }
+                          >
+                            {val != null && String(val).trim() !== ""
+                              ? String(val)
+                              : "—"}
                           </td>
                         );
                       })}
 
                       <td data-label="Status">
-                        <Pill tone={STATUS_TONE[rec.status] || "neutral"}>
+                        <Pill tone={STATUS_TONE[rec.status] || "plain"}>
                           {STATUS_LABELS[rec.status] || rec.status}
                         </Pill>
                       </td>
 
-                      <td data-label="Provision" className="num">
+                      <td data-label="Provision" className="r">
                         <span
-                          className="mono"
-                          style={{
-                            fontWeight: 600,
-                            color:
-                              rec.provision && Number(rec.provision) > 0
-                                ? "var(--ok)"
-                                : "var(--ink-2)",
-                          }}
+                          className={
+                            rec.provision && Number(rec.provision) > 0
+                              ? "good"
+                              : "muted"
+                          }
+                          style={{ fontWeight: 700 }}
                         >
                           {rec.provision != null
                             ? formatEur(Number(rec.provision))
@@ -686,7 +647,7 @@ export function RecordsTable({
 
                       <td
                         data-label="Aktion"
-                        className="num"
+                        className="r"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div
@@ -727,10 +688,9 @@ export function RecordsTable({
                           {isAdmin && (
                             <button
                               type="button"
-                              className="btn btn--sm btn--ghost"
+                              className="btn btn--sm btn--ghost btn--danger"
                               onClick={() => deleteRow(rec.id)}
                               title="Löschen"
-                              style={{ color: "var(--bad)" }}
                             >
                               <KerfaIcon name="trash" size="sm" />
                             </button>
@@ -794,13 +754,32 @@ export function RecordsTable({
             onSubmit={handleUpdateDrawerRecord}
             style={{ display: "flex", flexDirection: "column", gap: 18 }}
           >
-            <div className="steps">
-              <div className="step is-done">
-                <div className="step__dot" />
-                <div className="step__label">Erfasst</div>
+            {/* Exact Kerfa .steps rail & dots */}
+            <div
+              className="steps"
+              style={{ "--n": 3 } as React.CSSProperties}
+            >
+              <div className="steps__rail">
+                <i
+                  style={{
+                    transform: `scaleX(${
+                      formState.status === "booked"
+                        ? 1
+                        : formState.status === "open"
+                          ? 0.5
+                          : 0.25
+                    })`,
+                  }}
+                />
+              </div>
+              <div className="steps__dot is-done">
+                <i>
+                  <KerfaIcon name="check" size="sm" />
+                </i>
+                <span>Erfasst</span>
               </div>
               <div
-                className={`step ${
+                className={`steps__dot ${
                   formState.status === "open"
                     ? "is-now"
                     : formState.status === "booked"
@@ -808,22 +787,34 @@ export function RecordsTable({
                       : ""
                 }`}
               >
-                <div className="step__dot" />
-                <div className="step__label">Offen / Geprüft</div>
+                <i>
+                  {formState.status === "booked" ? (
+                    <KerfaIcon name="check" size="sm" />
+                  ) : (
+                    <span>2</span>
+                  )}
+                </i>
+                <span>Geprüft</span>
               </div>
               <div
-                className={`step ${
+                className={`steps__dot ${
                   formState.status === "booked" ? "is-done" : ""
                 }`}
               >
-                <div className="step__dot" />
-                <div className="step__label">Provision gebucht</div>
+                <i>
+                  {formState.status === "booked" ? (
+                    <KerfaIcon name="check" size="sm" />
+                  ) : (
+                    <span>3</span>
+                  )}
+                </i>
+                <span>Gebucht</span>
               </div>
             </div>
 
-            <div className="form-grid">
+            <div className="formgrid">
               <label className="field">
-                <span className="field__label">Kundenname</span>
+                <span>Kundenname</span>
                 <input
                   className="input"
                   value={formState.customer_name}
@@ -837,7 +828,7 @@ export function RecordsTable({
               </label>
 
               <label className="field">
-                <span className="field__label">VB / Tippgeber</span>
+                <span>VB / Tippgeber</span>
                 <input
                   className="input"
                   value={formState.tippgeber}
@@ -848,7 +839,7 @@ export function RecordsTable({
               </label>
 
               <label className="field">
-                <span className="field__label">Tarif / Produkt</span>
+                <span>Tarif / Produkt</span>
                 <input
                   className="input"
                   value={formState.tariff}
@@ -859,9 +850,9 @@ export function RecordsTable({
               </label>
 
               <label className="field">
-                <span className="field__label">Provision (€)</span>
+                <span>Provision (€)</span>
                 <input
-                  className="input mono"
+                  className="input"
                   value={formState.provision}
                   onChange={(e) =>
                     setFormState((s) => ({ ...s, provision: e.target.value }))
@@ -870,10 +861,9 @@ export function RecordsTable({
               </label>
 
               <label className="field">
-                <span className="field__label">Status</span>
+                <span>Status</span>
                 <select
                   className="select"
-                  style={{ width: "100%" }}
                   value={formState.status}
                   onChange={(e) =>
                     setFormState((s) => ({ ...s, status: e.target.value }))
@@ -887,7 +877,7 @@ export function RecordsTable({
               </label>
 
               <label className="field">
-                <span className="field__label">Datum</span>
+                <span>Datum</span>
                 <input
                   type="date"
                   className="input"
@@ -903,7 +893,7 @@ export function RecordsTable({
               <div>
                 <div
                   style={{
-                    fontSize: "var(--fs-xs)",
+                    fontSize: "var(--fs-sm)",
                     fontWeight: 600,
                     color: "var(--ink-2)",
                     marginBottom: 10,
@@ -911,10 +901,10 @@ export function RecordsTable({
                 >
                   Sparten-Felder ({meta?.label || provider})
                 </div>
-                <div className="form-grid">
+                <div className="formgrid">
                   {extraCols.map((col) => (
                     <label key={col.key} className="field">
-                      <span className="field__label">{col.label}</span>
+                      <span>{col.label}</span>
                       <input
                         className="input"
                         value={formState.data[col.key] ?? ""}
@@ -967,9 +957,9 @@ export function RecordsTable({
           onSubmit={handleCreateRecord}
           style={{ display: "flex", flexDirection: "column", gap: 14 }}
         >
-          <div className="form-grid">
+          <div className="formgrid">
             <label className="field">
-              <span className="field__label">Kundenname *</span>
+              <span>Kundenname *</span>
               <input
                 required
                 className="input"
@@ -985,7 +975,7 @@ export function RecordsTable({
             </label>
 
             <label className="field">
-              <span className="field__label">VB / Tippgeber</span>
+              <span>VB / Tippgeber</span>
               <input
                 className="input"
                 value={formState.tippgeber}
@@ -997,7 +987,7 @@ export function RecordsTable({
             </label>
 
             <label className="field">
-              <span className="field__label">Tarif / Produkt</span>
+              <span>Tarif / Produkt</span>
               <input
                 className="input"
                 value={formState.tariff}
@@ -1009,9 +999,9 @@ export function RecordsTable({
             </label>
 
             <label className="field">
-              <span className="field__label">Provision (€)</span>
+              <span>Provision (€)</span>
               <input
-                className="input mono"
+                className="input"
                 value={formState.provision}
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, provision: e.target.value }))
@@ -1021,10 +1011,9 @@ export function RecordsTable({
             </label>
 
             <label className="field">
-              <span className="field__label">Status</span>
+              <span>Status</span>
               <select
                 className="select"
-                style={{ width: "100%" }}
                 value={formState.status}
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, status: e.target.value }))
@@ -1038,7 +1027,7 @@ export function RecordsTable({
             </label>
 
             <label className="field">
-              <span className="field__label">Auftragsdatum</span>
+              <span>Auftragsdatum</span>
               <input
                 type="date"
                 className="input"
@@ -1051,10 +1040,10 @@ export function RecordsTable({
           </div>
 
           {extraCols.length > 0 && (
-            <div className="form-grid">
+            <div className="formgrid">
               {extraCols.map((col) => (
                 <label key={col.key} className="field">
-                  <span className="field__label">{col.label}</span>
+                  <span>{col.label}</span>
                   <input
                     className="input"
                     value={formState.data[col.key] ?? ""}

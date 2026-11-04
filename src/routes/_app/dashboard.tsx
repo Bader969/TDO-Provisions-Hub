@@ -24,10 +24,10 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 const MIX_PALETTE = [
-  "var(--accent)",
-  "var(--ok)",
-  "var(--info)",
-  "var(--warn)",
+  "var(--s-direct)",
+  "var(--s-trade)",
+  "var(--s-retail)",
+  "var(--s-hosp)",
 ];
 
 function formatEur(val: number): string {
@@ -213,14 +213,14 @@ function DashboardPage() {
   const areaChartData = useMemo(() => {
     const activeProviders = providerStats.filter((p) => p.count > 0);
     const list =
-      activeProviders.length >= 5 ? activeProviders : providerStats.slice(0, 8);
+      activeProviders.length >= 5 ? activeProviders : providerStats.slice(0, 7);
     let running = 0;
     const series = list.map((p) => {
       running += Math.round(p.sum);
       return running;
     });
-    const compare = series.map((v) => Math.round(v * 0.82));
-    const labels = list.map((p) => p.label);
+    const compare = series.map((v) => Math.round(v * 0.78));
+    const labels = list.map((p) => p.id);
     return { series, compare, labels };
   }, [providerStats]);
 
@@ -233,17 +233,17 @@ function DashboardPage() {
         color: MIX_PALETTE[0],
       },
       {
-        name: "Mobilfunk & Festnetz (VF, 1&1, O2, Ay Yildiz, Yourfone)",
+        name: "Mobilfunk & Festnetz",
         keys: ["VF", "1u1", "O2", "Ayyildiz", "Yourfone"],
         color: MIX_PALETTE[1],
       },
       {
-        name: "Krankenkassen GKV (DAK, BKK, BIG, VIACTIV)",
+        name: "Krankenkassen (GKV)",
         keys: ["DAK", "BKK", "Bigdirekt", "Viactiv"],
         color: MIX_PALETTE[2],
       },
       {
-        name: "Vergleichsportale (Check24)",
+        name: "Check24 & Vergleich",
         keys: ["Check"],
         color: MIX_PALETTE[3],
       },
@@ -338,26 +338,26 @@ function DashboardPage() {
         <div className="card ov-hero">
           <div className="ov-hero__head">
             <div>
-              <div className="kpi__label">Kumuliertes Provisionsvolumen</div>
-              <div className="ov-hero__num">
-                <span className="ov-hero__val">
-                  {loading ? "…" : formatEur(totalProvision)}
-                </span>
-                <Delta value={18.4} />
+              <div className="ov-hero__label">
+                Kumuliertes Provisionsvolumen
               </div>
-              <div className="ov-hero__sub">
+              <div className="ov-hero__fig">
+                <span>{loading ? "…" : formatEur(totalProvision)}</span>
+                <Delta value={18.4} note="ggü. Vormonat" />
+              </div>
+              <p className="muted">
                 {selectedVb === "__all__"
                   ? `Alle Vermittler & Tippgeber · ${scopedRecords.length} gewertete Aufträge`
                   : `Gefiltert auf VB: ${selectedVb} · ${scopedRecords.length} Aufträge`}
-              </div>
+              </p>
             </div>
-            <div className="legend">
+            <div className="legend ov-hero__legend">
               <span>
-                <i style={{ background: "var(--accent)" }} />
+                <i />
                 Ist-Provision
               </span>
               <span>
-                <i className="legend__dash" />
+                <i className="is-dash" />
                 Vormonats-Basis
               </span>
             </div>
@@ -367,18 +367,16 @@ function DashboardPage() {
             series={areaChartData.series}
             compare={areaChartData.compare}
             labels={areaChartData.labels}
-            height={210}
+            height={216}
             format={formatEurCompact}
-            seriesLabel="Kumuliert"
-            compareLabel="Vormonat"
           />
 
-          <div className="ov-hero__foot">
-            <div className="ov-hero__mixlabel">Sparten-Mix nach Provision</div>
-            <div className="mix">
+          <div className="mix">
+            <div className="mix__bar">
               {categoryMix.map((c) => (
-                <i
+                <span
                   key={c.name}
+                  className="mix__seg"
                   style={{
                     flex: Math.max(4, c.pct),
                     background: c.color,
@@ -389,38 +387,46 @@ function DashboardPage() {
             </div>
             <div className="mix__keys">
               {categoryMix.map((c) => (
-                <span key={c.name}>
+                <button key={c.name} type="button" className="mix__key">
                   <i style={{ background: c.color }} />
-                  {c.name} <b>{c.pct}%</b>
-                </span>
+                  <span>{c.name}</span>
+                  <b>{c.pct}%</b>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
         <div className="ov-side">
-          {/* Pace Card: Provider Bar Comparison */}
+          {/* Pace Card: Provider Bar Comparison (exact .pace__chart structure) */}
           <div className="card pace">
             <div className="chead">
-              <div>
-                <div className="chead__title">Anbieter-Volumen</div>
-                <div className="chead__sub">
-                  Top 7 Sparten im direkten Vergleich
-                </div>
+              <div className="chead__text">
+                <h2>Anbieter-Volumen</h2>
+                <p>Top 7 Sparten im direkten Vergleich</p>
               </div>
-              <Pill tone="ok">11 Sparten</Pill>
+              <Pill tone="good">11 Sparten</Pill>
             </div>
 
-            <div className="pace__bars">
+            <div className="pace__fig">
+              <span>{formatEurCompact(paceBars.sorted[0]?.sum || 0)}</span>
+              <span className="muted">
+                Stärkste Sparte: {paceBars.sorted[0]?.label || "Strom"}
+              </span>
+            </div>
+
+            <div className="pace__chart">
+              <div className="pace__target" style={{ bottom: "62%" }}>
+                <em>Ziel</em>
+              </div>
               {paceBars.sorted.map((p, idx) => {
-                const hPct = Math.max(
-                  8,
-                  Math.round((p.sum / paceBars.maxVal) * 100)
-                );
+                const ratio = Math.max(0.08, p.sum / paceBars.maxVal);
                 return (
                   <div
                     key={p.id}
-                    className={`pace__col ${idx === 0 ? "is-now" : ""}`}
+                    className={`pace__col ${
+                      idx === 0 ? "is-now" : p.sum === 0 ? "is-future" : ""
+                    }`}
                     onClick={() =>
                       navigate({
                         to: "/providers/$slug",
@@ -430,55 +436,56 @@ function DashboardPage() {
                     style={{ cursor: "pointer" }}
                     title={`${p.label}: ${formatEur(p.sum)} (${p.count} Aufträge)`}
                   >
-                    <div className="pace__track">
-                      <i
-                        className="pace__fill"
-                        style={{ height: `${hPct}%` }}
-                      />
-                      <span
-                        className="pace__target"
-                        style={{ bottom: "65%" }}
-                      />
-                    </div>
-                    <span className="pace__lbl">{p.id}</span>
+                    <i style={{ transform: `scaleY(${ratio})` }} />
                   </div>
                 );
               })}
             </div>
 
-            <div className="pace__foot">
-              <span>
-                Stärkste Sparte: <b>{paceBars.sorted[0]?.label || "Strom"}</b> (
-                {formatEurCompact(paceBars.sorted[0]?.sum || 0)})
-              </span>
-              <span className="mono">{scopedRecords.length} Aufträge</span>
+            <div className="pace__axis">
+              {paceBars.sorted.map((p) => (
+                <span key={p.id} className="muted">
+                  {p.id}
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* Next-Up Card: Live OpenWA Group Status */}
+          {/* Next-Up Card: Live OpenWA Group Status (exact .nextup structure) */}
           <div className="card nextup">
-            <div className="nextup__tag">
-              <KerfaIcon name="chat" size="sm" />
-              <span>OpenWA Live-Bridge · {TDO_GROUP_CHAT_ID}</span>
+            <div className="chead">
+              <div className="chead__text">
+                <h2>OpenWA Live-Bridge</h2>
+                <p>Gruppe {TDO_GROUP_CHAT_ID}</p>
+              </div>
+              <KerfaIcon name="chat" />
             </div>
-            <div className="nextup__title">
-              {latestWaRecord
-                ? `Letzter Auftrag: ${latestWaRecord.customer_name || "Kunde"} (${latestWaRecord.provider})`
-                : "WhatsApp-Gruppe verbunden & bereit"}
+
+            <div className="nextup__main">
+              <div className="nextup__ico">
+                <KerfaIcon name="bolt" />
+              </div>
+              <div className="cell__text">
+                <b>
+                  {latestWaRecord
+                    ? `${latestWaRecord.customer_name || "Kunde"} (${
+                        latestWaRecord.provider
+                      })`
+                    : "WhatsApp-Gruppe verbunden"}
+                </b>
+                <small>
+                  {latestWaRecord?.tippgeber
+                    ? `VB: ${latestWaRecord.tippgeber} · ${
+                        latestWaRecord.record_date || "Aktuell"
+                      }`
+                    : "Automatische VB- & Sparten-Zuordnung"}
+                </small>
+              </div>
             </div>
-            <div className="nextup__meta">
-              <span>
-                <KerfaIcon name="bolt" size="sm" />
-                {rawMessages.length} letzte Gruppennachrichten
-              </span>
-              {latestWaRecord?.provision != null && (
-                <span>
-                  <KerfaIcon name="coin" size="sm" />
-                  {formatEur(Number(latestWaRecord.provision))}
-                </span>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+
+            <div className="nextup__count">
+              <b>{rawMessages.length}</b>
+              <span className="muted">Gruppen-Events</span>
               <button
                 type="button"
                 className="btn btn--sm btn--primary"
@@ -486,14 +493,8 @@ function DashboardPage() {
                 onClick={() => syncWhatsAppGroup(false)}
               >
                 <KerfaIcon name="refresh" size="sm" />
-                <span>
-                  {syncingWa ? "Synchronisiere…" : "Gruppe synchronisieren"}
-                </span>
+                <span>{syncingWa ? "Sync…" : "Gruppe synchronisieren"}</span>
               </button>
-              <Link to="/inbox" className="btn btn--sm">
-                <span>Posteingang</span>
-                <KerfaIcon name="arrowR" size="sm" />
-              </Link>
             </div>
           </div>
         </div>
@@ -502,18 +503,15 @@ function DashboardPage() {
       {/* 4 KPI CARDS WITH SPARKLINES */}
       <section className="kpis ov-kpis">
         <div className="card kpi">
-          <div className="kpi__top">
-            <span className="kpi__label">Provisionsvolumen</span>
+          <div className="kpi__label">
             <span className="kpi__ico">
               <KerfaIcon name="dollar" size="sm" />
             </span>
+            <span>Provisionsvolumen</span>
           </div>
           <div className="kpi__value">{formatEur(totalProvision)}</div>
           <div className="kpi__foot">
-            <div>
-              <Delta value={18.4} />
-              <div className="kpi__sub">inkl. Beispielliste &amp; WA</div>
-            </div>
+            <Delta value={18.4} note="inkl. WA" />
             <Sparkline
               points={[480, 920, 1650, 2490, 3480, totalProvision || 4320]}
             />
@@ -521,20 +519,18 @@ function DashboardPage() {
         </div>
 
         <div className="card kpi">
-          <div className="kpi__top">
-            <span className="kpi__label">Erfasste Aufträge</span>
+          <div className="kpi__label">
             <span className="kpi__ico">
               <KerfaIcon name="box" size="sm" />
             </span>
+            <span>Erfasste Aufträge</span>
           </div>
           <div className="kpi__value">{scopedRecords.length}</div>
           <div className="kpi__foot">
-            <div>
-              <Delta value={12.6} />
-              <div className="kpi__sub">
-                {bookedCount} gebucht · {openCount} offen
-              </div>
-            </div>
+            <Delta
+              value={12.6}
+              note={`${bookedCount} gebucht · ${openCount} offen`}
+            />
             <Sparkline
               points={[
                 18,
@@ -544,24 +540,21 @@ function DashboardPage() {
                 84,
                 Math.max(10, scopedRecords.length),
               ]}
-              tone="ok"
+              tone="good"
             />
           </div>
         </div>
 
         <div className="card kpi">
-          <div className="kpi__top">
-            <span className="kpi__label">Ø Provision / Auftrag</span>
+          <div className="kpi__label">
             <span className="kpi__ico">
               <KerfaIcon name="chart" size="sm" />
             </span>
+            <span>Ø Provision / Auftrag</span>
           </div>
           <div className="kpi__value">{formatEur(avgProvision)}</div>
           <div className="kpi__foot">
-            <div>
-              <Delta value={5.2} />
-              <div className="kpi__sub">Durchschnitt über 11 Sparten</div>
-            </div>
+            <Delta value={5.2} note="11 Sparten" />
             <Sparkline
               points={[36, 41, 39, 44, 46, Math.max(25, avgProvision)]}
             />
@@ -569,55 +562,43 @@ function DashboardPage() {
         </div>
 
         <div className="card kpi">
-          <div className="kpi__top">
-            <span className="kpi__label">Tippgeber / VBs</span>
+          <div className="kpi__label">
             <span className="kpi__ico">
               <KerfaIcon name="users" size="sm" />
             </span>
+            <span>Tippgeber / VBs</span>
           </div>
           <div className="kpi__value">{uniqueVbs.length}</div>
           <div className="kpi__foot">
-            <div>
-              <Delta value={9.1} />
-              <div className="kpi__sub">Automatische VB-Erkennung</div>
-            </div>
+            <Delta value={9.1} note="Auto-VB" />
             <Sparkline
               points={[1, 2, 2, 3, 4, Math.max(2, uniqueVbs.length)]}
-              tone="ok"
+              tone="good"
             />
           </div>
         </div>
       </section>
 
-      {/* ALL 11 PROVIDER TILES IN KERFA STUDIO GRID */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div className="chead" style={{ marginBottom: 0 }}>
-          <div>
-            <div className="chead__title">
-              Alle 11 Anbieter-Sparten (Einzelblätter &amp; Tabellen)
-            </div>
-            <div className="chead__sub">
+      {/* ALL 11 PROVIDER TILES IN KERFA .acc-grid */}
+      <section style={{ marginTop: "var(--gap)" }}>
+        <div className="chead">
+          <div className="chead__text">
+            <h2>Alle 11 Anbieter-Sparten (Einzelblätter &amp; Tabellen)</h2>
+            <p>
               Klicke auf eine Sparte für Detail-Tabelle, Studio-Drawer,
               PDF-Nachweise und Einzel-Export
-            </div>
+            </p>
           </div>
           <Link
             to="/providers/$slug"
             params={{ slug: "strom" }}
-            className="btn btn--sm btn--ghost"
+            className="linkbtn"
           >
-            <span>Alle Tabellen durchsuchen</span>
-            <KerfaIcon name="arrowR" size="sm" />
+            Alle Tabellen durchsuchen →
           </Link>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(225px, 1fr))",
-            gap: 12,
-          }}
-        >
+        <div className="acc-grid">
           {providerStats.map((p) => (
             <Link
               key={p.id}
@@ -626,42 +607,36 @@ function DashboardPage() {
               className="card acc-tile"
             >
               <div className="acc-tile__top">
-                <Avatar name={p.label} size="sm" square />
-                <Pill tone={p.count > 0 ? "ok" : "neutral"}>
+                <Avatar name={p.label} size="lg" />
+                <div className="cell__text">
+                  <b>{p.label}</b>
+                  <small>Blatt: {p.sheetName}</small>
+                </div>
+                <Pill
+                  tone={p.count > 0 ? "good" : "plain"}
+                  style={{ marginLeft: "auto" }}
+                >
                   {p.count} {p.count === 1 ? "Auftrag" : "Aufträge"}
                 </Pill>
               </div>
-              <div>
-                <div className="acc-tile__name">{p.label}</div>
-                <div className="acc-tile__loc">Blatt: {p.sheetName}</div>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                  marginTop: 2,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{ fontSize: "var(--fs-lg)", fontWeight: 600 }}
-                >
-                  {formatEur(p.sum)}
-                </span>
+
+              <div className="acc-tile__mid">
+                <div>
+                  <small className="muted">Provisionssumme</small>
+                  <b>{formatEur(p.sum)}</b>
+                </div>
                 <Sparkline
                   points={p.spark}
-                  tone={p.sum > 0 ? "ok" : undefined}
+                  className="acc-spark"
+                  tone={p.sum > 0 ? "good" : undefined}
                 />
               </div>
+
               <div className="acc-tile__foot">
-                <span>
+                <small className="muted">
                   <b>{p.booked}</b> gebucht · <b>{p.open}</b> offen
-                </span>
-                <span style={{ color: "var(--accent)", fontWeight: 600 }}>
-                  Öffnen →
-                </span>
+                </small>
+                <span className="acc-tile__owner linkbtn">Öffnen →</span>
               </div>
             </Link>
           ))}
@@ -670,30 +645,27 @@ function DashboardPage() {
 
       {/* BOTTOM 3-COLUMN STUDIO ROW: RECENT DEALS, TOP VBs, WHATSAPP ACTIVITY */}
       <section className="ov-row">
-        {/* Column 1: Recent Orders */}
+        {/* Column 1: Recent Orders (.ov-deals ul > li) */}
         <div className="card card--flush ov-closing">
           <div className="chead">
-            <div>
-              <div className="chead__title">Neueste Aufträge</div>
-              <div className="chead__sub">
-                Direkt aus WhatsApp &amp; Abrechnungsimport
-              </div>
+            <div className="chead__text">
+              <h2>Neueste Aufträge</h2>
+              <p>Direkt aus WhatsApp &amp; Abrechnungsimport</p>
             </div>
             <Link
               to="/providers/$slug"
               params={{ slug: "strom" }}
-              className="btn btn--sm btn--ghost"
+              className="linkbtn"
             >
-              <span>Alle</span>
-              <KerfaIcon name="arrowR" size="sm" />
+              Alle →
             </Link>
           </div>
-          <div className="ov-list ov-deals">
+          <ul className="ov-list ov-deals">
             {recentDeals.map((d) => {
               const provMeta = PROVIDERS.find((p) => p.id === d.provider);
               const tone =
                 d.status === "booked"
-                  ? "ok"
+                  ? "good"
                   : d.status === "open"
                     ? "info"
                     : d.status === "review"
@@ -708,52 +680,50 @@ function DashboardPage() {
                       ? "Prüfung"
                       : "Storno";
               return (
-                <Link
+                <li
                   key={d.id}
-                  to="/providers/$slug"
-                  params={{ slug: provMeta?.path || "strom" }}
-                  className="ov-deal"
+                  onClick={() =>
+                    navigate({
+                      to: "/providers/$slug",
+                      params: { slug: provMeta?.path || "strom" },
+                    })
+                  }
+                  style={{ cursor: "pointer" }}
                 >
-                  <Avatar name={d.customer_name || d.provider} size="sm" />
-                  <div className="ov-deal__main">
-                    <div className="ov-deal__title">
-                      {d.customer_name || "Unbekannter Kunde"}
-                    </div>
-                    <div className="ov-deal__sub">
-                      <span>{provMeta?.label || d.provider}</span>
-                      <i>·</i>
+                  <Avatar name={d.customer_name || d.provider} />
+                  <div className="cell__text">
+                    <b>{d.customer_name || "Unbekannter Kunde"}</b>
+                    <small>
+                      <Pill tone="accent" dot={false}>
+                        {provMeta?.label || d.provider}
+                      </Pill>
                       <span>{d.tariff || "Standard"}</span>
-                      {d.tippgeber && (
-                        <>
-                          <i>·</i>
-                          <span>VB: {d.tippgeber}</span>
-                        </>
-                      )}
-                    </div>
+                      {d.tippgeber && <span>· VB: {d.tippgeber}</span>}
+                    </small>
                   </div>
                   <Pill tone={tone}>{statusText}</Pill>
-                  <div className="ov-deal__val">
-                    <div>
+                  <div className="ov-deals__val">
+                    <b>
                       {d.provision != null
                         ? formatEur(Number(d.provision))
                         : "—"}
-                    </div>
-                    <span>{d.record_date || "Aktuell"}</span>
+                    </b>
+                    <small className="muted">
+                      {d.record_date || "Aktuell"}
+                    </small>
                   </div>
-                </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
 
-        {/* Column 2: Top VB / Tippgeber Ranking */}
+        {/* Column 2: Top VB / Tippgeber Ranking (.ov-rank ul > li) */}
         <div className="card ov-top-acc">
           <div className="chead">
-            <div>
-              <div className="chead__title">Tippgeber &amp; Vermittler (VB)</div>
-              <div className="chead__sub">
-                Klicke zum Filtern des gesamten Dashboards
-              </div>
+            <div className="chead__text">
+              <h2>Tippgeber &amp; Vermittler (VB)</h2>
+              <p>Klicke zum Filtern des gesamten Dashboards</p>
             </div>
             {selectedVb !== "__all__" && (
               <button
@@ -765,59 +735,51 @@ function DashboardPage() {
               </button>
             )}
           </div>
-          <div className="ov-list ov-rank">
+          <ul className="ov-list ov-rank">
             {uniqueVbs.slice(0, 6).map((vb, idx) => {
               const maxProv = Math.max(1, uniqueVbs[0]?.provision || 1);
               const isSelected = selectedVb === vb.name;
               return (
-                <div
+                <li
                   key={vb.name}
-                  className="ov-rank__row"
                   onClick={() =>
                     setSelectedVb(isSelected ? "__all__" : vb.name)
                   }
                   style={{
                     cursor: "pointer",
                     background: isSelected ? "var(--accent-soft)" : undefined,
-                    borderRadius: "var(--r-md)",
-                    padding: "4px 6px",
+                    borderRadius: 12,
+                    paddingLeft: isSelected ? 8 : undefined,
+                    paddingRight: isSelected ? 8 : undefined,
                   }}
                 >
                   <span className="ov-rank__n">{idx + 1}</span>
-                  <div className="ov-rank__body">
-                    <div className="ov-rank__top">
-                      <span>{vb.name}</span>
-                      <b>{formatEur(vb.provision)}</b>
-                    </div>
-                    <LevelBar value={vb.provision} max={maxProv} tone="ok" />
-                    <span className="ov-rank__meta">
-                      {vb.count} Aufträge ·{" "}
-                      {Math.round(
-                        (vb.provision / Math.max(1, totalProvision)) * 100
-                      )}
-                      % Anteil
-                    </span>
+                  <div className="cell__text">
+                    <b>{vb.name}</b>
+                    <LevelBar value={vb.provision} max={maxProv} tone="good" />
                   </div>
-                </div>
+                  <div className="ov-deals__val">
+                    <b>{formatEur(vb.provision)}</b>
+                    <small className="muted">{vb.count} Aufträge</small>
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
 
-        {/* Column 3: WhatsApp & System Activity */}
+        {/* Column 3: WhatsApp & System Activity (.ov-feed ul > li) */}
         <div className="card ov-activity">
           <div className="chead">
-            <div>
-              <div className="chead__title">WhatsApp &amp; Hub-Feed</div>
-              <div className="chead__sub">
-                Letzte Webhook- &amp; Gruppen-Events
-              </div>
+            <div className="chead__text">
+              <h2>WhatsApp &amp; Hub-Feed</h2>
+              <p>Letzte Webhook- &amp; Gruppen-Events</p>
             </div>
-            <Link to="/inbox" className="btn btn--sm btn--ghost">
-              <span>Eingang</span>
+            <Link to="/inbox" className="linkbtn">
+              Eingang →
             </Link>
           </div>
-          <div className="ov-list ov-feed">
+          <ul className="ov-list ov-feed">
             {rawMessages.slice(0, 5).map((msg: any) => {
               const firstLine =
                 String(msg.body || "")
@@ -825,20 +787,18 @@ function DashboardPage() {
                   .map((s) => s.trim())
                   .find(Boolean) || "WhatsApp Nachricht";
               return (
-                <div key={msg.id} className="ov-feed__item">
+                <li key={msg.id}>
                   <Avatar
                     name={msg.from_name || msg.from_number || "WA"}
-                    size="xs"
+                    size="sm"
                     tone={msg.processed ? 1 : 0}
                   />
-                  <div>
-                    <p>
-                      <b>{firstLine.slice(0, 48)}</b>{" "}
-                      {msg.processed
-                        ? "automatisch als Auftrag verbucht"
-                        : "wartet auf Prüfung"}
-                    </p>
-                    <span>
+                  <span>
+                    <b>{firstLine.slice(0, 44)}</b>{" "}
+                    {msg.processed
+                      ? "automatisch als Auftrag verbucht"
+                      : "wartet auf Prüfung"}
+                    <small className="muted">
                       {msg.received_at
                         ? new Date(msg.received_at).toLocaleString("de-DE", {
                             day: "2-digit",
@@ -847,24 +807,22 @@ function DashboardPage() {
                             minute: "2-digit",
                           })
                         : "Gerade eben"}
-                    </span>
-                  </div>
-                </div>
+                    </small>
+                  </span>
+                </li>
               );
             })}
             {rawMessages.length === 0 && (
-              <div className="ov-feed__item">
-                <Avatar name="WA" size="xs" tone={1} />
-                <div>
-                  <p>
-                    <b>WhatsApp-Gruppe {TDO_GROUP_CHAT_ID}</b> ist aktiv
-                    überwacht.
-                  </p>
-                  <span>Live-Bridge bereit</span>
-                </div>
-              </div>
+              <li>
+                <Avatar name="WA" size="sm" tone={1} />
+                <span>
+                  <b>WhatsApp-Gruppe {TDO_GROUP_CHAT_ID}</b> ist aktiv
+                  überwacht.
+                  <small className="muted">Live-Bridge bereit</small>
+                </span>
+              </li>
             )}
-          </div>
+          </ul>
         </div>
       </section>
 

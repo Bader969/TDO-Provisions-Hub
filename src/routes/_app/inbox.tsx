@@ -148,7 +148,7 @@ function InboxPage() {
   const errorCount = msgs.filter((m) => m.parse_error).length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div>
       <PageHead
         eyebrow={`Live OpenWA Bridge · Gruppe ${TDO_GROUP_CHAT_ID} · KI- & Regel-Parser`}
         title="WhatsApp-Eingang & Auftrags-Parser"
@@ -181,48 +181,46 @@ function InboxPage() {
         }
       />
 
-      {/* Kerfa 3-Step Summary Pipeline */}
+      {/* Kerfa 3-Step Summary Pipeline (.of-flow > .card.of-step) */}
       <div
         className="of-flow"
         style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
       >
         <div className="card of-step">
-          <div className="of-step__top">
-            <span className="of-step__label">Empfangene Nachrichten</span>
-            <span className="of-step__n of-step__n--accent">{msgs.length}</span>
+          <span className="of-step__n tone--accent">{msgs.length}</span>
+          <div className="cell__text">
+            <small>Empfangene Nachrichten</small>
+            <b>{TDO_GROUP_CHAT_ID}</b>
           </div>
-          <div className="of-step__val">{TDO_GROUP_CHAT_ID}</div>
         </div>
 
         <div className="card of-step">
-          <div className="of-step__top">
-            <span className="of-step__label">Erfolgreich verbucht</span>
-            <span className="of-step__n of-step__n--ok">{processedCount}</span>
+          <span className="of-step__n tone--good">{processedCount}</span>
+          <div className="cell__text">
+            <small>Erfolgreich verbucht</small>
+            <b>Automatisch zugeordnet</b>
           </div>
-          <div className="of-step__val">Automatische Sparten-Zuordnung</div>
         </div>
 
         <div className="card of-step">
-          <div className="of-step__top">
-            <span className="of-step__label">Prüfung / Hinweise</span>
-            <span className="of-step__n of-step__n--warn">{errorCount}</span>
+          <span className="of-step__n tone--warn">{errorCount}</span>
+          <div className="cell__text">
+            <small>Prüfung / Hinweise</small>
+            <b>In `raw_messages` protokolliert</b>
           </div>
-          <div className="of-step__val">Protokolliert in `raw_messages`</div>
         </div>
       </div>
 
       {/* Two-Column Top Section: Message Simulator + Architecture Info */}
-      <div className="ov-top">
+      <div className="ov-top" style={{ marginBottom: "var(--gap)" }}>
         <div className="card">
           <div className="chead">
-            <div>
-              <div className="chead__title">
-                WhatsApp-Auftragsnachricht direkt testen / einspeisen
-              </div>
-              <div className="chead__sub">
+            <div className="chead__text">
+              <h2>WhatsApp-Auftragsnachricht direkt testen / einspeisen</h2>
+              <p>
                 Simuliert eine Gruppennachricht an `/api/public/whatsapp` inkl.
                 automatischer VB-Anlage
-              </div>
+              </p>
             </div>
             <Pill tone="accent" dot={false}>
               Sofort-Parser
@@ -234,9 +232,7 @@ function InboxPage() {
             style={{ display: "flex", flexDirection: "column", gap: 12 }}
           >
             <label className="field">
-              <span className="field__label">
-                WhatsApp-Absendername (`pushname` / Fallback-VB)
-              </span>
+              <span>WhatsApp-Absendername (`pushname` / Fallback-VB)</span>
               <input
                 className="input"
                 value={senderName}
@@ -246,9 +242,9 @@ function InboxPage() {
             </label>
 
             <label className="field">
-              <span className="field__label">Nachrichtentext</span>
+              <span>Nachrichtentext</span>
               <textarea
-                className="textarea mono"
+                className="textarea"
                 rows={7}
                 value={messageBody}
                 onChange={(e) => setMessageBody(e.target.value)}
@@ -263,7 +259,7 @@ function InboxPage() {
                 gap: 10,
               }}
             >
-              <span style={{ fontSize: "var(--fs-xs)", color: "var(--ink-3)" }}>
+              <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>
                 Erkennt alle 11 Sparten + neue VBs automatisch
               </span>
               <button
@@ -285,50 +281,34 @@ function InboxPage() {
         <div className="ov-side">
           <div className="card">
             <div className="chead">
-              <div>
-                <div className="chead__title">OpenWA &amp; Webhook-Details</div>
-                <div className="chead__sub">Aktive Konfiguration</div>
+              <div className="chead__text">
+                <h2>OpenWA &amp; Webhook-Details</h2>
+                <p>Aktive Konfiguration</p>
               </div>
-              <Pill tone="ok">Online</Pill>
+              <Pill tone="good">Online</Pill>
             </div>
-            <div className="kv">
-              <div>
-                <dt>Gruppen-ID</dt>
-                <dd className="mono">{TDO_GROUP_CHAT_ID}</dd>
+            <div>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>Gruppen-ID</b>
+                  <small>{TDO_GROUP_CHAT_ID}</small>
+                </div>
               </div>
-              <div>
-                <dt>Webhook</dt>
-                <dd className="mono">/api/public/whatsapp</dd>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>Webhook-Route</b>
+                  <small>/api/public/whatsapp</small>
+                </div>
               </div>
-              <div>
-                <dt>Neue VB-Logik</dt>
-                <dd>Erstellt neuen VB-Filter automatisch</dd>
+              <div className="row-set">
+                <div className="row-set__text">
+                  <b>Neue VB-Logik</b>
+                  <small>
+                    Erstellt neuen VB-Filter automatisch; nutzt `pushname` als
+                    Fallback
+                  </small>
+                </div>
               </div>
-              <div>
-                <dt>Ohne VB im Text</dt>
-                <dd>Nutzt WhatsApp-Absender (`pushname`)</dd>
-              </div>
-            </div>
-          </div>
-
-          <div className="card nextup">
-            <div className="nextup__tag">
-              <KerfaIcon name="sparkles" size="sm" />
-              <span>Keine Nachricht geht verloren</span>
-            </div>
-            <div className="nextup__title">
-              Automatische Tippgeber-Erkennung (VB)
-            </div>
-            <div
-              style={{
-                fontSize: "var(--fs-xs)",
-                color: "var(--ink-2)",
-                lineHeight: 1.45,
-              }}
-            >
-              Existiert ein Tippgeber (VB) noch nicht im Hub, wird er beim
-              Speichern automatisch angelegt und erscheint sofort in allen
-              Auswahlfiltern und im 12-Blatt Abrechnungsexport.
             </div>
           </div>
         </div>
@@ -336,20 +316,17 @@ function InboxPage() {
 
       {/* Message Protocol Table */}
       <div className="card card--flush">
-        <div className="chead">
-          <div>
-            <div className="chead__title">
-              Empfangene Gruppennachrichten ({msgs.length})
-            </div>
-            <div className="chead__sub">
-              Echtzeit-Protokoll aus `public.raw_messages`
-            </div>
+        <div className="chead" style={{ paddingBottom: 14 }}>
+          <div className="chead__text">
+            <h2>Empfangene Gruppennachrichten ({msgs.length})</h2>
+            <p>Echtzeit-Protokoll aus `public.raw_messages`</p>
           </div>
         </div>
 
         {loading ? (
           <div
-            style={{ padding: 32, textAlign: "center", color: "var(--ink-3)" }}
+            className="muted"
+            style={{ padding: 32, textAlign: "center" }}
           >
             Lade Nachrichten…
           </div>
@@ -361,14 +338,14 @@ function InboxPage() {
           />
         ) : (
           <div className="table-wrap">
-            <table className="table table--cards">
+            <table className="table table--stack">
               <thead>
                 <tr>
                   <th>Status</th>
                   <th>Absender</th>
                   <th>Erkannte Sparte / VB</th>
                   <th>Nachrichteninhalt</th>
-                  <th>Empfangen am</th>
+                  <th className="r">Empfangen am</th>
                 </tr>
               </thead>
               <tbody>
@@ -382,26 +359,21 @@ function InboxPage() {
                           m.parse_error ? (
                             <Pill tone="bad">Fehler</Pill>
                           ) : (
-                            <Pill tone="ok">Verarbeitet</Pill>
+                            <Pill tone="good">Verarbeitet</Pill>
                           )
                         ) : (
                           <Pill tone="warn">Warteschlange</Pill>
                         )}
                       </td>
                       <td data-label="Absender">
-                        <div className="row-title">
+                        <div className="cell">
                           <Avatar
                             name={m.from_name || m.from_number || "WA"}
-                            size="sm"
                             tone={1}
                           />
-                          <div className="row-title__text">
-                            <span className="row-title__main">
-                              {m.from_name ?? m.from_number ?? "Unbekannt"}
-                            </span>
-                            <span className="row-title__sub mono">
-                              {m.chat_id || TDO_GROUP_CHAT_ID}
-                            </span>
+                          <div className="cell__text">
+                            <b>{m.from_name ?? m.from_number ?? "Unbekannt"}</b>
+                            <small>{m.chat_id || TDO_GROUP_CHAT_ID}</small>
                           </div>
                         </div>
                       </td>
@@ -424,7 +396,7 @@ function InboxPage() {
                             </Pill>
                           )}
                           {m.pdf_filename && (
-                            <Pill tone="ok" dot={false}>
+                            <Pill tone="good" dot={false}>
                               PDF: {m.pdf_filename}
                             </Pill>
                           )}
@@ -432,21 +404,21 @@ function InboxPage() {
                       </td>
                       <td data-label="Inhalt">
                         <pre
-                          className="mono"
                           style={{
                             margin: 0,
                             whiteSpace: "pre-wrap",
                             fontSize: "var(--fs-xs)",
                             color: "var(--ink-2)",
                             maxWidth: 520,
+                            fontFamily: "var(--font)",
                           }}
                         >
                           {m.body}
                         </pre>
                         {m.parse_error && (
                           <div
+                            className="bad"
                             style={{
-                              color: "var(--bad)",
                               fontSize: "var(--fs-2xs)",
                               marginTop: 4,
                             }}
@@ -455,18 +427,10 @@ function InboxPage() {
                           </div>
                         )}
                       </td>
-                      <td data-label="Zeitpunkt">
-                        <span
-                          className="mono"
-                          style={{
-                            fontSize: "var(--fs-xs)",
-                            color: "var(--ink-3)",
-                          }}
-                        >
-                          {m.received_at
-                            ? new Date(m.received_at).toLocaleString("de-DE")
-                            : "—"}
-                        </span>
+                      <td data-label="Zeitpunkt" className="r muted">
+                        {m.received_at
+                          ? new Date(m.received_at).toLocaleString("de-DE")
+                          : "—"}
                       </td>
                     </tr>
                   );

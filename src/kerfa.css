@@ -5181,3 +5181,46 @@ html.is-dragging .pl-card:not(.is-drag) {
 }
 
 
+
+/* === TDO Studio Ergonomics & Token Aliases === */
+:root {
+  --ok: var(--good);
+  --ok-soft: var(--good-soft);
+  --ink-3: var(--muted);
+  --line-strong: var(--line-2);
+  --sh-sm: var(--shadow);
+  --sh-md: var(--shadow);
+  --sh-lg: var(--shadow-lg);
+}
+[data-theme=dark] {
+  --ok: var(--good);
+  --ok-soft: var(--good-soft);
+  --ink-3: var(--muted);
+  --line-strong: var(--line-2);
+}
+.phead__actions > .select,
+.chead > .select,
+.chead__tools > .select {
+  width: auto;
+  min-width: 190px;
+}
+.seg__thumb,
+.tabs__pill,
+.topnav__pill,
+.tabbar__pill {
+  transition: clip-path 0.42s var(--ease), opacity 0.2s var(--ease);
+}
+.seg button[aria-pressed=true] .badge {
+  background: #ffffff2e;
+  color: inherit;
+}
+[data-theme=dark] .seg button[aria-pressed=true] .badge {
+  background: #0000002e;
+  color: inherit;
+}
+.switch i {
+  transition: transform 0.25s var(--ease);
+}
+.switch[aria-checked=true] i {
+  transform: translateX(18px);
+}
